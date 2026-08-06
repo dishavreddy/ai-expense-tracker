@@ -24,17 +24,23 @@ export function useIncomes() {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
+    if (!user) return;
     const { data, error } = await supabase
       .from('incomes')
       .select('*')
+      .eq('user_id', user.id)
       .order('date', { ascending: false });
     if (error) return;
     setIncomes((data as IncomeRow[]).map(toIncome));
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setIncomes([]);
+      setLoading(true);
+      return;
+    }
     fetchAll();
   }, [user, fetchAll]);
 

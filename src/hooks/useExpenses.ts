@@ -29,18 +29,24 @@ export function useExpenses() {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
+    if (!user) return;
     const { data, error } = await supabase
       .from('expenses')
       .select('*')
+      .eq('user_id', user.id)
       .order('date', { ascending: false })
       .order('created_at', { ascending: false });
     if (error) return;
     setExpenses((data as ExpenseRow[]).map(toExpense));
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setExpenses([]);
+      setLoading(true);
+      return;
+    }
     fetchAll();
   }, [user, fetchAll]);
 

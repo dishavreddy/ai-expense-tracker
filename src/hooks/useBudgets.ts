@@ -24,17 +24,23 @@ export function useBudgets() {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
+    if (!user) return;
     const { data, error } = await supabase
       .from('budgets')
       .select('*')
+      .eq('user_id', user.id)
       .order('month', { ascending: false });
     if (error) return;
     setBudgets((data as BudgetRow[]).map(toBudget));
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setBudgets([]);
+      setLoading(true);
+      return;
+    }
     fetchAll();
   }, [user, fetchAll]);
 

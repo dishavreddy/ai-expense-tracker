@@ -35,17 +35,23 @@ export function useRecurring() {
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
+    if (!user) return;
     const { data, error } = await supabase
       .from('recurring_expenses')
       .select('*')
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     if (error) return;
     setRecurring((data as RecurringRow[]).map(toRecurring));
     setLoading(false);
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setRecurring([]);
+      setLoading(true);
+      return;
+    }
     fetchAll();
   }, [user, fetchAll]);
 

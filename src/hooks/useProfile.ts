@@ -38,7 +38,11 @@ export function useProfile() {
   }, [user, email]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setProfile({ name: '', email: '' });
+      setLoading(true);
+      return;
+    }
     fetchProfile();
   }, [user, fetchProfile]);
 
