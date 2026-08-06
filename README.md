@@ -1,7 +1,5 @@
-<<<<<<< HEAD
-
-
 # AI Expense Tracker
+<img width="1917" height="928" alt="image" src="https://github.com/user-attachments/assets/d8eb2626-4a41-48bf-9ac6-dd071ef60fa4" />
 
 An AI-powered Expense Tracker built with React, TypeScript, Vite, Supabase, and Gemini AI. The application helps users manage their finances by tracking expenses and income, automatically categorizing transactions using AI, scanning receipts, and generating financial insights through interactive dashboards.
 
