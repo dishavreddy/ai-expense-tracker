@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { RecurringExpense, Frequency, CategoryId } from '../types';
-import { supabase } from '../lib/supabase';
+import { isMissingColumnError, supabase } from '../lib/supabase';
 import { categoryMeta } from '../constants';
 import { todayISO } from '../lib/format';
 import { useAuth } from './useAuth';
@@ -36,12 +36,26 @@ export function useRecurring() {
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
+    const query = supabase
       .from('recurring_expenses')
       .select('*')
-      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-    if (error) return;
+    const { data, error } = user
+      ? await query.eq('user_id', user.id)
+      : await query;
+    if (error) {
+      if (isMissingColumnError(error, 'user_id')) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('recurring_expenses')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (fallbackError) return;
+        setRecurring((fallbackData as RecurringRow[]).map(toRecurring));
+        setLoading(false);
+        return;
+      }
+      return;
+    }
     setRecurring((data as RecurringRow[]).map(toRecurring));
     setLoading(false);
   }, [user]);
@@ -74,12 +88,13 @@ export function useRecurring() {
         start_date: date,
         next_date: date,
         active: true,
+        user_id: user?.id,
       });
       if (error) return false;
       fetchAll();
       return true;
     },
-    [fetchAll],
+    [fetchAll, user?.id],
   );
 
   const toggleRecurring = useCallback(

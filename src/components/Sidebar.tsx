@@ -89,7 +89,7 @@ export function Sidebar({
   return (
     <>
       {/* Mobile top bar */}
-      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur-lg dark:border-slate-800 dark:bg-surface-dark/80 lg:hidden">
+      <div className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200/70 bg-white/80 px-4 py-3 backdrop-blur-lg dark:border-slate-800 dark:bg-surface-dark/80 md:hidden">
         <div className="flex items-center gap-2">
           <div className="grid h-8 w-8 place-items-center rounded-xl bg-brand-600 text-white">
             <Wallet className="h-4 w-4" />
@@ -107,7 +107,7 @@ export function Sidebar({
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm animate-fade-in" onClick={() => setMobileOpen(false)} />
           <div className="absolute left-0 top-0 h-full w-72 overflow-y-auto bg-white p-4 shadow-floating animate-slide-right dark:bg-surface-dark">
             <div className="mb-6 flex items-center justify-between">

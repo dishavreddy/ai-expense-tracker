@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { UserProfile } from '../types';
-import { supabase } from '../lib/supabase';
+import { isMissingColumnError, supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 
 interface ProfileRow {
@@ -17,22 +17,51 @@ export function useProfile() {
 
   const fetchProfile = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('profile')
       .select('id, name')
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (data) {
+    if (error && isMissingColumnError(error, 'user_id')) {
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('profile')
+        .select('id, name')
+        .maybeSingle();
+      if (fallbackError) {
+        setProfile({ name: '', email });
+      } else if (fallbackData) {
+        setProfile({ name: (fallbackData as ProfileRow).name ?? '', email });
+      } else {
+        await supabase
+  .from('profile')
+  .upsert(
+    { user_id: user.id, name: '', email },
+    { onConflict: 'user_id', ignoreDuplicates: true }
+  );
+const { data: inserted } = await supabase
+  .from('profile')
+  .select('id, name')
+  .eq('user_id', user.id)
+  .single();
+setProfile({ name: (inserted as ProfileRow | null)?.name ?? '', email });
+      }
+    } else if (data) {
       setProfile({ name: (data as ProfileRow).name ?? '', email });
     } else {
       // No profile row yet — create one with the auth email
-      const { data: inserted } = await supabase
-        .from('profile')
-        .insert({ name: '', email })
-        .select('id, name')
-        .single();
-      setProfile({ name: (inserted as ProfileRow | null)?.name ?? '', email });
+      await supabase
+  .from('profile')
+  .upsert(
+    { user_id: user.id, name: '', email },
+    { onConflict: 'user_id', ignoreDuplicates: true }
+  );
+const { data: inserted } = await supabase
+  .from('profile')
+  .select('id, name')
+  .eq('user_id', user.id)
+  .single();
+setProfile({ name: (inserted as ProfileRow | null)?.name ?? '', email });
     }
     setLoading(false);
   }, [user, email]);

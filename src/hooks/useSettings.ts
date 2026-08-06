@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { AppSettings, CurrencyCode, ThemeMode } from '../types';
-import { supabase } from '../lib/supabase';
+import { isMissingColumnError, supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 
 interface SettingsRow {
@@ -30,22 +30,51 @@ export function useSettings() {
 
   const fetchSettings = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('app_settings')
       .select('*')
       .eq('user_id', user.id)
       .maybeSingle();
 
-    if (data) {
+    if (error && isMissingColumnError(error, 'user_id')) {
+      const { data: fallbackData, error: fallbackError } = await supabase
+        .from('app_settings')
+        .select('*')
+        .maybeSingle();
+      if (fallbackError) {
+        setSettings(DEFAULTS);
+      } else if (fallbackData) {
+        setSettings(toSettings(fallbackData as SettingsRow));
+      } else {
+        await supabase
+  .from('app_settings')
+  .upsert(
+    { user_id: user.id, currency: DEFAULTS.currency, monthly_income: 0, theme: DEFAULTS.theme },
+    { onConflict: 'user_id', ignoreDuplicates: true }
+  );
+const { data: inserted } = await supabase
+  .from('app_settings')
+  .select('*')
+  .eq('user_id', user.id)
+  .single();
+if (inserted) setSettings(toSettings(inserted as SettingsRow));
+      }
+    } else if (data) {
       setSettings(toSettings(data as SettingsRow));
     } else {
       // No settings row yet — create one with defaults
-      const { data: inserted } = await supabase
-        .from('app_settings')
-        .insert({ currency: DEFAULTS.currency, monthly_income: 0, theme: DEFAULTS.theme })
-        .select('*')
-        .single();
-      if (inserted) setSettings(toSettings(inserted as SettingsRow));
+      await supabase
+  .from('app_settings')
+  .upsert(
+    { user_id: user.id, currency: DEFAULTS.currency, monthly_income: 0, theme: DEFAULTS.theme },
+    { onConflict: 'user_id', ignoreDuplicates: true }
+  );
+const { data: inserted } = await supabase
+  .from('app_settings')
+  .select('*')
+  .eq('user_id', user.id)
+  .single();
+if (inserted) setSettings(toSettings(inserted as SettingsRow));
     }
     setLoading(false);
   }, [user]);

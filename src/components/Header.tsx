@@ -26,7 +26,7 @@ export function Header({ page, onQuickAdd }: HeaderProps) {
   return (
     <>
       {/* Desktop header */}
-      <header className="sticky top-0 z-20 hidden items-center justify-between border-b border-slate-200/70 bg-white/80 px-8 py-4 backdrop-blur-lg dark:border-slate-800 dark:bg-surface-dark/80 lg:flex">
+      <header className="sticky top-0 z-20 hidden items-center justify-between border-b border-slate-200/70 bg-white/80 px-8 py-4 backdrop-blur-lg dark:border-slate-800 dark:bg-surface-dark/80 md:flex">
         <div className="flex items-center gap-2 text-sm">
           <span className="text-slate-400">{info.crumb}</span>
           <span className="text-slate-300 dark:text-slate-600">/</span>
@@ -45,7 +45,7 @@ export function Header({ page, onQuickAdd }: HeaderProps) {
       </header>
 
       {/* Mobile header — visible below the mobile top bar */}
-      <header className="flex items-center justify-between px-4 py-3 lg:hidden">
+      <header className="flex items-center justify-between px-4 py-3 md:hidden">
         <h1 className="text-lg font-bold tracking-tight">{info.title}</h1>
         <button
           onClick={onQuickAdd}

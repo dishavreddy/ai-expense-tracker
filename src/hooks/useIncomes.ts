@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Income } from '../types';
-import { supabase } from '../lib/supabase';
+import { isMissingColumnError, supabase } from '../lib/supabase';
 import { todayISO } from '../lib/format';
 import { useAuth } from './useAuth';
 
@@ -25,12 +25,26 @@ export function useIncomes() {
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
+    const query = supabase
       .from('incomes')
       .select('*')
-      .eq('user_id', user.id)
       .order('date', { ascending: false });
-    if (error) return;
+    const { data, error } = user
+      ? await query.eq('user_id', user.id)
+      : await query;
+    if (error) {
+      if (isMissingColumnError(error, 'user_id')) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('incomes')
+          .select('*')
+          .order('date', { ascending: false });
+        if (fallbackError) return;
+        setIncomes((fallbackData as IncomeRow[]).map(toIncome));
+        setLoading(false);
+        return;
+      }
+      return;
+    }
     setIncomes((data as IncomeRow[]).map(toIncome));
     setLoading(false);
   }, [user]);
@@ -50,6 +64,7 @@ export function useIncomes() {
         amount: input.amount,
         source: input.description.trim(),
         date: input.date ?? todayISO(),
+        user_id: user?.id,
       };
       const { data, error } = await supabase
         .from('incomes')
@@ -61,7 +76,7 @@ export function useIncomes() {
       setIncomes((prev) => [inc, ...prev]);
       return inc;
     },
-    [],
+    [user?.id],
   );
 
   const deleteIncome = useCallback(async (id: string): Promise<boolean> => {

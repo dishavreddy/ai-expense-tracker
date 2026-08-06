@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Expense, CategoryId } from '../types';
-import { supabase } from '../lib/supabase';
+import { isMissingColumnError, supabase } from '../lib/supabase';
 import { categoryMeta } from '../constants';
 import { todayISO } from '../lib/format';
 import { useAuth } from './useAuth';
@@ -30,13 +30,28 @@ export function useExpenses() {
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
+    const query = supabase
       .from('expenses')
       .select('*')
-      .eq('user_id', user.id)
       .order('date', { ascending: false })
       .order('created_at', { ascending: false });
-    if (error) return;
+    const { data, error } = user
+      ? await query.eq('user_id', user.id)
+      : await query;
+    if (error) {
+      if (isMissingColumnError(error, 'user_id')) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('expenses')
+          .select('*')
+          .order('date', { ascending: false })
+          .order('created_at', { ascending: false });
+        if (fallbackError) return;
+        setExpenses((fallbackData as ExpenseRow[]).map(toExpense));
+        setLoading(false);
+        return;
+      }
+      return;
+    }
     setExpenses((data as ExpenseRow[]).map(toExpense));
     setLoading(false);
   }, [user]);
@@ -64,6 +79,7 @@ export function useExpenses() {
         category: input.category,
         date: input.date ?? todayISO(),
         emoji: meta.emoji,
+        user_id: user?.id,
       };
       const { data, error } = await supabase
         .from('expenses')

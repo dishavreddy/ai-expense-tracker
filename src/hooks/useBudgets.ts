@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Budget, CategoryId } from '../types';
-import { supabase } from '../lib/supabase';
+import { isMissingColumnError, supabase } from '../lib/supabase';
 import { currentMonth } from '../lib/format';
 import { useAuth } from './useAuth';
 
@@ -25,12 +25,26 @@ export function useBudgets() {
 
   const fetchAll = useCallback(async () => {
     if (!user) return;
-    const { data, error } = await supabase
+    const query = supabase
       .from('budgets')
       .select('*')
-      .eq('user_id', user.id)
       .order('month', { ascending: false });
-    if (error) return;
+    const { data, error } = user
+      ? await query.eq('user_id', user.id)
+      : await query;
+    if (error) {
+      if (isMissingColumnError(error, 'user_id')) {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('budgets')
+          .select('*')
+          .order('month', { ascending: false });
+        if (fallbackError) return;
+        setBudgets((fallbackData as BudgetRow[]).map(toBudget));
+        setLoading(false);
+        return;
+      }
+      return;
+    }
     setBudgets((data as BudgetRow[]).map(toBudget));
     setLoading(false);
   }, [user]);
@@ -49,6 +63,7 @@ export function useBudgets() {
       const { data: existing } = await supabase
         .from('budgets')
         .select('id')
+        .eq('user_id', user?.id)
         .eq('category', category)
         .eq('month', month)
         .maybeSingle();
@@ -67,7 +82,7 @@ export function useBudgets() {
       } else {
         const { data, error } = await supabase
           .from('budgets')
-          .insert({ category, month, limit_amount: limit })
+          .insert({ category, month, limit_amount: limit, user_id: user?.id })
           .select()
           .single();
         if (error || !data) return false;
@@ -75,7 +90,7 @@ export function useBudgets() {
       }
       return true;
     },
-    [],
+    [user?.id],
   );
 
   const deleteBudget = useCallback(async (id: string): Promise<boolean> => {

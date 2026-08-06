@@ -10,3 +10,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
   },
 });
+
+export function isMissingColumnError(error: { message?: string } | null | undefined, column: string): boolean {
+  if (!error?.message) return false;
+  const message = error.message.toLowerCase();
+  return message.includes('column') && message.includes(column.toLowerCase()) && message.includes('does not exist');
+}
