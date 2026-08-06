@@ -136,11 +136,9 @@ npm run preview
 
 <img width="1917" height="932" alt="Screenshot 2026-08-05 225806" src="https://github.com/user-attachments/assets/7e815cde-2f41-4067-ae48-8d65a384fa4c" />
 <img width="1917" height="931" alt="Screenshot 2026-08-05 225908" src="https://github.com/user-attachments/assets/dcbd3f54-4896-4803-8a79-b7a65182b4df" />
-![Uploading Screenshot 2026-08-05 230006.png…]()
+
 <img width="1916" height="921" alt="Screenshot 2026-08-05 225952" src="https://github.com/user-attachments/assets/33ef3256-507b-41d6-a45d-f9e3a733c1bd" />
 <img width="1917" height="932" alt="Screenshot 2026-08-05 230135" src="https://github.com/user-attachments/assets/80737a0e-673c-41f5-9d94-9089a23ea44c" />
-<img width="1917" height="930" alt="Screenshot 2026-08-05 230142" src="https://github.com/user-attachments/assets/d52ffedc-8eef-43ef-80a3-d36d992622ba" />
-![Uploading Screenshot 2026-08-05 230159.png…]()
 
 ---
 
